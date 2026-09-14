@@ -44,14 +44,14 @@ public class AuthService {
         user.setUserName(registerRequest.getUserName().trim());
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        user.setRole(registerRequest.getRole());
+        user.setAccountRole(registerRequest.getAccountRole());
 
         User savedUser = userRepository.save(user);
 
         UserDetails userDetails=org.springframework.security.core.userdetails.User
                 .withUsername(savedUser.getEmail())
                 .password(savedUser.getPassword())
-                .roles(savedUser.getRole().name())
+                .roles(savedUser.getAccountRole().name())
                 .build();
 
         String token = jwtService.generateToken(userDetails);
@@ -61,7 +61,7 @@ public class AuthService {
                 savedUser.getId(),
                 savedUser.getUserName(),
                 savedUser.getEmail(),
-                savedUser.getRole()
+                savedUser.getAccountRole()
         );
     }
 
@@ -82,7 +82,7 @@ public class AuthService {
         UserDetails userDetails=org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
                 .password(user.getPassword())
-                .roles(user.getRole().name())
+                .roles(user.getAccountRole().name())
                 .build();
 
         String token = jwtService.generateToken(userDetails);
@@ -92,7 +92,7 @@ public class AuthService {
                 user.getId(),
                 user.getUserName(),
                 user.getEmail(),
-                user.getRole()
+                user.getAccountRole()
         );
     }
 }

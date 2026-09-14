@@ -26,7 +26,7 @@ export default function RoleRedirect() {
     TECH_INTERVIEWER: "/interviewer",
   };
 
-  const path = dashboardPaths[user.role];
+  const path = dashboardPaths[user.accountRole];
 
   if (!path) {
     localStorage.removeItem("thrivyaToken");

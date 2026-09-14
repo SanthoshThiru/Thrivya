@@ -1,6 +1,6 @@
 package com.example.thrivya.dto.request;
 
-import com.example.thrivya.model.Role;
+import com.example.thrivya.model.AccountRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -24,6 +24,6 @@ public class RegisterRequest {
     private String password;
 
     @NotNull(message = "Role is required")
-    private Role role;
+    private AccountRole accountRole;
 
 }

@@ -10,12 +10,15 @@ export default function StudentDashboard() {
   const [dashboard, setDashboard] = useState(null);
   const [error, setError] = useState("");
 
-  const storedUser = localStorage.getItem("thrivyaUser");
+  const storedUser =
+    localStorage.getItem("thrivyaUser");
 
   let user = null;
 
   try {
-    user = storedUser ? JSON.parse(storedUser) : null;
+    user = storedUser
+      ? JSON.parse(storedUser)
+      : null;
   } catch {
     user = null;
   }
@@ -23,12 +26,21 @@ export default function StudentDashboard() {
   useEffect(() => {
     async function loadDashboard() {
       try {
-        const data = await getStudentDashboard();
+        const data =
+          await getStudentDashboard();
+
         setDashboard(data);
       } catch (requestError) {
-        if (requestError.response?.status === 401) {
-          localStorage.removeItem("thrivyaToken");
-          localStorage.removeItem("thrivyaUser");
+        if (
+          requestError.response?.status === 401
+        ) {
+          localStorage.removeItem(
+            "thrivyaToken"
+          );
+
+          localStorage.removeItem(
+            "thrivyaUser"
+          );
 
           navigate("/login", {
             replace: true,
@@ -54,37 +66,55 @@ export default function StudentDashboard() {
     "Student";
 
   function handleProfileSetup() {
-    navigate("/student/profile-setup");
+    navigate("/student/setup");
+  }
+
+  function handleShowSkills() {
+    navigate("/student/skills");
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("thrivyaToken");
+    localStorage.removeItem("thrivyaUser");
+
+    navigate("/login", {
+      replace: true,
+    });
+  }
+
+  function handleTryAgain() {
+    window.location.reload();
   }
 
   if (error) {
     return (
       <main style={styles.page}>
         <section style={styles.errorCard}>
-          <header style={styles.errorHeader}>
+          <header style={styles.header}>
             <div>
-              <p style={styles.brand}>Thrivya</p>
+              <p style={styles.brand}>
+                Thrivya
+              </p>
+
               <h1>Student Dashboard</h1>
             </div>
 
             <button
               type="button"
               style={styles.logoutButton}
-              onClick={() => {
-                localStorage.removeItem("thrivyaToken");
-                localStorage.removeItem("thrivyaUser");
-                navigate("/login", { replace: true });
-              }}
+              onClick={handleLogout}
             >
               Logout
             </button>
           </header>
 
-          <p style={styles.error}>{error}</p>
+          <p style={styles.error}>
+            {error}
+          </p>
 
           <button
             type="button"
-            onClick={() => window.location.reload()}
+            onClick={handleTryAgain}
             style={styles.primaryButton}
           >
             Try again
@@ -98,8 +128,15 @@ export default function StudentDashboard() {
     return (
       <main style={styles.page}>
         <section style={styles.card}>
-          <p style={styles.brand}>Thrivya</p>
-          <p>Loading student dashboard...</p>
+          <p style={styles.brand}>
+            Thrivya
+          </p>
+
+          <h1>Student Dashboard</h1>
+
+          <p>
+            Loading student dashboard...
+          </p>
         </section>
       </main>
     );
@@ -107,65 +144,58 @@ export default function StudentDashboard() {
 
   return (
     <DashboardCard
-      title={dashboard.title || "Student Dashboard"}
-      role={dashboard.role || "STUDENT"}
-      email={dashboard.email || user?.email || "Student"}
+      title={
+        dashboard.title ||
+        "Student Dashboard"
+      }
+      role={
+        dashboard.role ||
+        "STUDENT"
+      }
+      email={
+        dashboard.email ||
+        user?.email ||
+        "Student"
+      }
       message={
         dashboard.message ||
         "Your Thrivya career journey starts here."
       }
     >
-      <p>
-        Welcome, <strong>{studentName}</strong>
+      <p style={styles.welcomeText}>
+        Welcome{" "}
+        <strong>{studentName}</strong>
       </p>
 
       <div style={styles.infoBox}>
-        <h2>Your career journey</h2>
+        <h2>
+          Build your career profile
+        </h2>
 
         <p>
-          Start by choosing resume upload or manual skill
-          input.
+          Upload your resume or enter your
+          skills manually. Then choose a
+          desired career role or receive
+          relevant role suggestions.
         </p>
 
-        <button
-          type="button"
-          onClick={handleProfileSetup}
-          style={styles.primaryButton}
-        >
-          Start profile setup
-        </button>
-      </div>
+        <div style={styles.buttonGroup}>
+          <button
+            type="button"
+            onClick={handleProfileSetup}
+            style={styles.primaryButton}
+          >
+            Set up my career profile
+          </button>
 
-      <div style={styles.actions}>
-        <button
-          type="button"
-          onClick={() =>
-            navigate("/student/input-preference")
-          }
-          style={styles.secondaryButton}
-        >
-          Choose input preference
-        </button>
-
-        <button
-          type="button"
-          onClick={() =>
-            navigate("/student/manual-skills")
-          }
-          style={styles.secondaryButton}
-        >
-          Enter skills manually
-        </button>
-
-        <button
-          type="button"
-          onClick={() =>
-            navigate("/student/resume-upload")
-          }
-          style={styles.secondaryButton}
-        >
-          Upload resume
-        </button>
+          <button
+            type="button"
+            onClick={handleShowSkills}
+            style={styles.secondaryButton}
+          >
+            Show my skills
+          </button>
+        </div>
       </div>
     </DashboardCard>
   );
@@ -185,7 +215,8 @@ const styles = {
     padding: "32px",
     borderRadius: "18px",
     background: "#ffffff",
-    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.12)",
+    boxShadow:
+      "0 10px 30px rgba(15, 23, 42, 0.12)",
   },
 
   errorCard: {
@@ -195,10 +226,11 @@ const styles = {
     padding: "32px",
     borderRadius: "18px",
     background: "#ffffff",
-    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.12)",
+    boxShadow:
+      "0 10px 30px rgba(15, 23, 42, 0.12)",
   },
 
-  errorHeader: {
+  header: {
     display: "flex",
     alignItems: "flex-start",
     justifyContent: "space-between",
@@ -211,6 +243,11 @@ const styles = {
     color: "#2563eb",
     fontSize: "18px",
     fontWeight: 700,
+  },
+
+  welcomeText: {
+    fontSize: "17px",
+    color: "#334155",
   },
 
   logoutButton: {
@@ -233,11 +270,11 @@ const styles = {
     background: "#eff6ff",
   },
 
-  actions: {
+  buttonGroup: {
     display: "flex",
     flexWrap: "wrap",
     gap: "12px",
-    marginTop: "24px",
+    marginTop: "8px",
   },
 
   primaryButton: {
@@ -253,12 +290,13 @@ const styles = {
   },
 
   secondaryButton: {
-    padding: "11px 16px",
+    marginTop: "16px",
+    padding: "12px 18px",
     border: "1px solid #2563eb",
     borderRadius: "9px",
     background: "#ffffff",
     color: "#2563eb",
-    fontSize: "14px",
+    fontSize: "15px",
     fontWeight: 600,
     cursor: "pointer",
   },

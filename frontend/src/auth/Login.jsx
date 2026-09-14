@@ -4,6 +4,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+
 import { loginUser } from "../api/authApi";
 import "../styles/auth.css";
 
@@ -31,8 +32,8 @@ export default function Login() {
     }));
   }
 
-  function getDashboardPath(role) {
-    switch (role) {
+  function getDashboardPath(accountRole) {
+    switch (accountRole) {
       case "STUDENT":
         return "/student";
 
@@ -64,9 +65,15 @@ export default function Login() {
 
       console.log("Login response:", result);
 
-      if (!result.token) {
+      if (!result?.token) {
         throw new Error(
           "Login succeeded, but no token was returned."
+        );
+      }
+
+      if (!result?.accountRole) {
+        throw new Error(
+          "Login succeeded, but no account role was returned."
         );
       }
 
@@ -81,12 +88,12 @@ export default function Login() {
       );
 
       const dashboardPath = getDashboardPath(
-        result.role
+        result.accountRole
       );
 
       if (!dashboardPath) {
         throw new Error(
-          `Unknown role received: ${result.role}`
+          `Unknown account role received: ${result.accountRole}`
         );
       }
 
@@ -94,7 +101,10 @@ export default function Login() {
         replace: true,
       });
     } catch (error) {
-      const responseData = error.response?.data;
+      console.error("Frontend login processing error:", error);
+
+      const responseData =
+        error.response?.data;
 
       let message =
         "Login failed. Check your email and password.";
@@ -103,6 +113,22 @@ export default function Login() {
         message = responseData;
       } else if (responseData?.message) {
         message = responseData.message;
+      } else if (
+        error.message ===
+        "Login succeeded, but no token was returned."
+      ) {
+        message = error.message;
+      } else if (
+        error.message ===
+        "Login succeeded, but no account role was returned."
+      ) {
+        message = error.message;
+      } else if (
+        error.message?.startsWith(
+          "Unknown account role received:"
+        )
+      ) {
+        message = error.message;
       }
 
       setError(message);
@@ -136,7 +162,9 @@ export default function Login() {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">
+              Email
+            </label>
 
             <input
               id="email"
@@ -145,12 +173,15 @@ export default function Login() {
               value={formData.email}
               onChange={handleChange}
               placeholder="Enter your email"
+              autoComplete="email"
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">
+              Password
+            </label>
 
             <input
               id="password"
@@ -159,6 +190,7 @@ export default function Login() {
               value={formData.password}
               onChange={handleChange}
               placeholder="Enter your password"
+              autoComplete="current-password"
               required
             />
           </div>
@@ -168,7 +200,9 @@ export default function Login() {
             className="primary-button"
             disabled={loading}
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading
+              ? "Logging in..."
+              : "Login"}
           </button>
         </form>
 

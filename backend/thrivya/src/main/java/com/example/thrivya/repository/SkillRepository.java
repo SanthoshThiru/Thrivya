@@ -1,4 +1,14 @@
 package com.example.thrivya.repository;
 
-public interface SkillRepository {
+import com.example.thrivya.model.Skill;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface SkillRepository
+        extends JpaRepository<Skill, Long> {
+
+    Optional<Skill> findByCanonicalNameIgnoreCase(
+            String canonicalName
+    );
 }

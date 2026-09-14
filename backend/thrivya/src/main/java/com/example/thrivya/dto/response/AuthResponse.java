@@ -1,6 +1,6 @@
 package com.example.thrivya.dto.response;
 
-import com.example.thrivya.model.Role;
+import com.example.thrivya.model.AccountRole;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,5 +13,5 @@ public class AuthResponse {
     private Long userId;
     private String username;
     private String email;
-    private Role role;
+    private AccountRole accountRole;
 }

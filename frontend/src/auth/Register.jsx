@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+} from "react-router-dom";
+
 import { registerUser } from "../api/authApi";
 import "../styles/auth.css";
 
@@ -41,9 +45,15 @@ export default function Register() {
 
     try {
       const payload = {
-        userName: formData.userName.trim(),
-        email: formData.email.trim().toLowerCase(),
+        userName: formData.userName
+          .trim(),
+
+        email: formData.email
+          .trim()
+          .toLowerCase(),
+
         password: formData.password,
+
         role: formData.role,
       };
 
@@ -57,7 +67,13 @@ export default function Register() {
         },
       });
     } catch (error) {
-      const responseData = error.response?.data;
+      console.error(
+        "Registration error:",
+        error
+      );
+
+      const responseData =
+        error.response?.data;
 
       let message =
         "Registration failed. Please try again.";
@@ -89,7 +105,8 @@ export default function Register() {
         <h1>Create your account</h1>
 
         <p className="auth-description">
-          Register to begin your personalized career journey.
+          Register to begin your personalized career
+          journey.
         </p>
 
         {error && (
@@ -100,7 +117,9 @@ export default function Register() {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="userName">Full name</label>
+            <label htmlFor="userName">
+              Full name
+            </label>
 
             <input
               id="userName"
@@ -109,12 +128,15 @@ export default function Register() {
               value={formData.userName}
               onChange={handleChange}
               placeholder="Enter your full name"
+              autoComplete="name"
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">
+              Email
+            </label>
 
             <input
               id="email"
@@ -123,12 +145,15 @@ export default function Register() {
               value={formData.email}
               onChange={handleChange}
               placeholder="Enter your email"
+              autoComplete="email"
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">
+              Password
+            </label>
 
             <input
               id="password"
@@ -137,13 +162,16 @@ export default function Register() {
               value={formData.password}
               onChange={handleChange}
               placeholder="Minimum 8 characters"
+              autoComplete="new-password"
               minLength={8}
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="role">Account type</label>
+            <label htmlFor="role">
+              Account type
+            </label>
 
             <select
               id="role"

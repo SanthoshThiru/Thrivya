@@ -32,7 +32,7 @@ export default function ProtectedRoute({
 
   if (
     allowedRoles &&
-    !allowedRoles.includes(user.role)
+    !allowedRoles.includes(user.accountRole)
   ) {
     return <Navigate to="/unauthorized" replace />;
   }
