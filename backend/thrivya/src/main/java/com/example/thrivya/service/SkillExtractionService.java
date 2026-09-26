@@ -2,7 +2,15 @@ package com.example.thrivya.service;
 
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -15,12 +23,13 @@ public class SkillExtractionService {
     public List<ExtractedSkill> extractFromManualText(
             String skillsText
     ) {
-        if (skillsText == null || skillsText.isBlank()) {
+        if (skillsText == null
+                || skillsText.isBlank()) {
             return List.of();
         }
 
-        Set<String> detectedNames =
-                new LinkedHashSet<>();
+        Map<String, ExtractedSkill> uniqueSkills =
+                new LinkedHashMap<>();
 
         String[] enteredParts =
                 skillsText.split("[,;\\n|]");
@@ -29,39 +38,47 @@ public class SkillExtractionService {
             String normalized =
                     normalizeSkill(part);
 
-            if (normalized != null) {
-                detectedNames.add(normalized);
+            if (normalized == null) {
+                continue;
             }
+
+            String key =
+                    normalized.toLowerCase(Locale.ROOT);
+
+            uniqueSkills.putIfAbsent(
+                    key,
+                    new ExtractedSkill(
+                            normalized,
+                            "MANUAL_INPUT",
+                            1.0,
+                            "Entered by the user"
+                    )
+            );
         }
 
-        return detectedNames.stream()
-                .map(skill ->
-                        new ExtractedSkill(
-                                skill,
-                                "MANUAL_INPUT",
-                                1.0,
-                                "Entered by the user"
-                        )
-                )
-                .toList();
+        return new ArrayList<>(
+                uniqueSkills.values()
+        );
     }
 
     public List<ExtractedSkill> extractFromResumeText(
             String resumeText
     ) {
-        if (resumeText == null || resumeText.isBlank()) {
+        if (resumeText == null
+                || resumeText.isBlank()) {
             return List.of();
         }
 
         String lowerText =
                 resumeText.toLowerCase(Locale.ROOT);
 
-        List<ExtractedSkill> result =
-                new ArrayList<>();
+        Map<String, ExtractedSkill> uniqueSkills =
+                new LinkedHashMap<>();
 
-        for (Map.Entry<String, String> entry :
-                CANONICAL_SKILLS.entrySet()) {
-
+        for (
+                Map.Entry<String, String> entry
+                : CANONICAL_SKILLS.entrySet()
+        ) {
             String alias = entry.getKey();
             String canonicalName = entry.getValue();
 
@@ -73,28 +90,39 @@ public class SkillExtractionService {
                             Pattern.CASE_INSENSITIVE
                     );
 
-            if (pattern.matcher(lowerText).find()) {
-                result.add(
-                        new ExtractedSkill(
-                                canonicalName,
-                                "RESUME_TEXT",
-                                0.90,
-                                findEvidence(
-                                        resumeText,
-                                        alias
-                                )
-                        )
-                );
+            if (!pattern.matcher(lowerText).find()) {
+                continue;
             }
+
+            String key =
+                    canonicalName.toLowerCase(
+                            Locale.ROOT
+                    );
+
+            uniqueSkills.putIfAbsent(
+                    key,
+                    new ExtractedSkill(
+                            canonicalName,
+                            "RESUME_TEXT",
+                            0.90,
+                            findEvidence(
+                                    resumeText,
+                                    alias
+                            )
+                    )
+            );
         }
 
-        return result.stream()
-                .filter(uniqueByName())
-                .toList();
+        return new ArrayList<>(
+                uniqueSkills.values()
+        );
     }
 
-    private String normalizeSkill(String rawSkill) {
-        if (rawSkill == null || rawSkill.isBlank()) {
+    private String normalizeSkill(
+            String rawSkill
+    ) {
+        if (rawSkill == null
+                || rawSkill.isBlank()) {
             return null;
         }
 
@@ -115,7 +143,9 @@ public class SkillExtractionService {
             return canonical;
         }
 
-        return toTitleCase(rawSkill.trim());
+        return toTitleCase(
+                rawSkill.trim()
+        );
     }
 
     private String findEvidence(
@@ -148,17 +178,9 @@ public class SkillExtractionService {
                 .trim();
     }
 
-    private Predicate<ExtractedSkill> uniqueByName() {
-        Set<String> names = new HashSet<>();
-
-        return skill ->
-                names.add(
-                        skill.name()
-                                .toLowerCase(Locale.ROOT)
-                );
-    }
-
-    private String toTitleCase(String value) {
+    private String toTitleCase(
+            String value
+    ) {
         String[] words =
                 value.split("\\s+");
 
@@ -176,7 +198,8 @@ public class SkillExtractionService {
                 .orElse(value);
     }
 
-    private static Map<String, String> createSkillMap() {
+    private static Map<String, String>
+    createSkillMap() {
         Map<String, String> skills =
                 new LinkedHashMap<>();
 
@@ -236,7 +259,9 @@ public class SkillExtractionService {
                 "Algorithms"
         );
 
-        return Collections.unmodifiableMap(skills);
+        return Collections.unmodifiableMap(
+                skills
+        );
     }
 
     public record ExtractedSkill(

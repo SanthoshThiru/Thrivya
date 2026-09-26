@@ -9,24 +9,39 @@ import {
 export default function RoleSelection() {
   const navigate = useNavigate();
 
-  const [desiredRole, setDesiredRole] = useState("");
-  const [roles, setRoles] = useState([]);
+  const [desiredRole, setDesiredRole] =
+    useState("");
+
+  const [roles, setRoles] =
+    useState([]);
+
   const [selectedRoleId, setSelectedRoleId] =
     useState("");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+
+  const [message, setMessage] =
+    useState("");
+
+  const [error, setError] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [roleSelected, setRoleSelected] =
+    useState(false);
 
   async function handleSuggestions() {
     setError("");
     setMessage("");
+    setRoleSelected(false);
+    setSelectedRoleId("");
     setLoading(true);
 
     try {
-      const result = await getRoleSuggestions();
+      const result =
+        await getRoleSuggestions();
 
       setRoles(result);
-      setSelectedRoleId("");
     } catch (requestError) {
       setError(
         requestError.response?.data?.message ||
@@ -42,15 +57,15 @@ export default function RoleSelection() {
 
     setError("");
     setMessage("");
+    setRoleSelected(false);
+    setSelectedRoleId("");
     setLoading(true);
 
     try {
-      const result = await searchDesiredRole(
-        desiredRole
-      );
+      const result =
+        await searchDesiredRole(desiredRole);
 
       setRoles(result);
-      setSelectedRoleId("");
     } catch (requestError) {
       setError(
         requestError.response?.data?.message ||
@@ -69,14 +84,19 @@ export default function RoleSelection() {
 
     setError("");
     setMessage("");
+    setRoleSelected(false);
     setLoading(true);
 
     try {
-      const result = await selectRole(
-        Number(selectedRoleId)
+      const result =
+        await selectRole(Number(selectedRoleId));
+
+      setMessage(
+        result.message ||
+          "Career role selected successfully"
       );
 
-      setMessage(result.message);
+      setRoleSelected(true);
     } catch (requestError) {
       setError(
         requestError.response?.data?.message ||
@@ -85,6 +105,10 @@ export default function RoleSelection() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleGenerateATS() {
+    navigate("/student/ats");
   }
 
   return (
@@ -127,7 +151,12 @@ export default function RoleSelection() {
           <button
             type="submit"
             disabled={loading}
-            style={styles.primaryButton}
+            style={{
+              ...styles.primaryButton,
+              ...(loading
+                ? styles.disabledButton
+                : {}),
+            }}
           >
             {loading
               ? "Searching..."
@@ -148,7 +177,12 @@ export default function RoleSelection() {
           type="button"
           onClick={handleSuggestions}
           disabled={loading}
-          style={styles.secondaryButton}
+          style={{
+            ...styles.secondaryButton,
+            ...(loading
+              ? styles.secondaryDisabledButton
+              : {}),
+          }}
         >
           {loading
             ? "Analyzing..."
@@ -165,51 +199,56 @@ export default function RoleSelection() {
           </p>
 
           <div>
-            {roles.map((role) => (
-              <label
-                key={role.roleId}
-                style={{
-                  ...styles.roleCard,
-                  ...(String(selectedRoleId) ===
-                  String(role.roleId)
-                    ? styles.selectedRoleCard
-                    : {}),
-                }}
-              >
-                <input
-                  type="radio"
-                  name="selectedRole"
-                  value={role.roleId}
-                  checked={
-                    String(selectedRoleId) ===
-                    String(role.roleId)
-                  }
-                  onChange={(event) =>
-                    setSelectedRoleId(
-                      event.target.value
-                    )
-                  }
-                />
+            {roles.map((role) => {
+              const isSelected =
+                String(selectedRoleId) ===
+                String(role.roleId);
 
-                <span style={styles.roleContent}>
-                  <strong style={styles.roleTitle}>
-                    {role.rankNumber}. {role.title}
-                  </strong>
+              return (
+                <label
+                  key={role.roleId}
+                  style={{
+                    ...styles.roleCard,
+                    ...(isSelected
+                      ? styles.selectedRoleCard
+                      : {}),
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="selectedRole"
+                    value={role.roleId}
+                    checked={isSelected}
+                    onChange={(event) => {
+                      setSelectedRoleId(
+                        event.target.value
+                      );
+                      setRoleSelected(false);
+                      setMessage("");
+                      setError("");
+                    }}
+                  />
 
-                  <span style={styles.relevance}>
-                    Relevance:{" "}
-                    {Math.round(
-                      role.relevanceScore * 100
-                    )}
-                    %
+                  <span style={styles.roleContent}>
+                    <strong style={styles.roleTitle}>
+                      {role.rankNumber}. {role.title}
+                    </strong>
+
+                    <span style={styles.relevance}>
+                      Relevance:{" "}
+                      {Math.round(
+                        Number(role.relevanceScore) * 100
+                      )}
+                      %
+                    </span>
+
+                    <span style={styles.roleDescription}>
+                      {role.description}
+                    </span>
                   </span>
-
-                  <span style={styles.roleDescription}>
-                    {role.description}
-                  </span>
-                </span>
-              </label>
-            ))}
+                </label>
+              );
+            })}
           </div>
 
           <button
@@ -218,7 +257,7 @@ export default function RoleSelection() {
             disabled={loading || !selectedRoleId}
             style={{
               ...styles.primaryButton,
-              ...(!selectedRoleId
+              ...(!selectedRoleId || loading
                 ? styles.disabledButton
                 : {}),
             }}
@@ -227,6 +266,26 @@ export default function RoleSelection() {
               ? "Saving..."
               : "Select this role"}
           </button>
+
+          {roleSelected && (
+            <div style={styles.atsBox}>
+              <h3>Role selected successfully</h3>
+
+              <p style={styles.helperText}>
+                You can now generate an explainable ATS
+                report using your selected role and latest
+                uploaded resume.
+              </p>
+
+              <button
+                type="button"
+                onClick={handleGenerateATS}
+                style={styles.atsButton}
+              >
+                Generate ATS report
+              </button>
+            </div>
+          )}
         </section>
       )}
     </section>
@@ -293,6 +352,12 @@ const styles = {
     cursor: "not-allowed",
   },
 
+  secondaryDisabledButton: {
+    color: "#94a3b8",
+    borderColor: "#94a3b8",
+    cursor: "not-allowed",
+  },
+
   roleCard: {
     display: "flex",
     alignItems: "flex-start",
@@ -332,6 +397,26 @@ const styles = {
     color: "#64748b",
     fontSize: "14px",
     lineHeight: 1.5,
+  },
+
+  atsBox: {
+    marginTop: "24px",
+    padding: "20px",
+    border: "1px solid #86efac",
+    borderRadius: "12px",
+    background: "#f0fdf4",
+  },
+
+  atsButton: {
+    marginTop: "10px",
+    padding: "12px 18px",
+    border: "none",
+    borderRadius: "8px",
+    background: "#16a34a",
+    color: "white",
+    cursor: "pointer",
+    fontSize: "14px",
+    fontWeight: 600,
   },
 
   error: {

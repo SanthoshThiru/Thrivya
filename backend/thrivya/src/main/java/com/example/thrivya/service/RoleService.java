@@ -2,13 +2,26 @@ package com.example.thrivya.service;
 
 import com.example.thrivya.dto.response.RoleSuggestionResponse;
 import com.example.thrivya.dto.response.SelectedRoleResponse;
-import com.example.thrivya.model.*;
-import com.example.thrivya.repository.*;
+import com.example.thrivya.model.CareerProfile;
+import com.example.thrivya.model.Role;
+import com.example.thrivya.model.RoleSuggestion;
+import com.example.thrivya.model.User;
+import com.example.thrivya.repository.CareerProfileRepository;
+import com.example.thrivya.repository.ProfileSkillRepository;
+import com.example.thrivya.repository.RoleRepository;
+import com.example.thrivya.repository.RoleSuggestionRepository;
+import com.example.thrivya.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,6 +34,10 @@ public class RoleService {
     private final RoleRepository roleRepository;
     private final RoleSuggestionRepository suggestionRepository;
 
+    /**
+     * Generates a maximum of five role suggestions
+     * based on the student's current normalized skills.
+     */
     @Transactional
     public List<RoleSuggestionResponse> suggestRoles(
             String email
@@ -38,11 +55,15 @@ public class RoleService {
                 profileSkillRepository
                         .findAllByProfileId(profile.getId())
                         .stream()
+                        .filter(profileSkill ->
+                                profileSkill.getSkill() != null
+                        )
                         .map(profileSkill ->
                                 profileSkill
                                         .getSkill()
                                         .getCanonicalName()
                                         .toLowerCase(Locale.ROOT)
+                                        .trim()
                         )
                         .collect(Collectors.toSet());
 
@@ -64,9 +85,20 @@ public class RoleService {
                                 )
                         )
                         .sorted(
-                                Comparator.comparing(
-                                        ScoredRole::score
-                                ).reversed()
+                                Comparator
+                                        .comparing(
+                                                ScoredRole::score
+                                        )
+                                        .reversed()
+                                        .thenComparing(
+                                                scoredRole ->
+                                                        scoredRole
+                                                                .role()
+                                                                .getTitle()
+                                                                .toLowerCase(
+                                                                        Locale.ROOT
+                                                                )
+                                        )
                         )
                         .limit(5)
                         .toList();
@@ -97,32 +129,41 @@ public class RoleService {
                             .selected(false)
                             .build();
 
-            suggestionRepository.save(suggestion);
+            suggestions.add(suggestion);
 
             responses.add(
-                    RoleSuggestionResponse.builder()
-                            .roleId(role.getId())
-                            .title(role.getTitle())
-                            .description(role.getDescription())
-                            .relevanceScore(
-                                    scoredRole.score()
-                            )
-                            .rankNumber(rank)
-                            .selected(false)
-                            .build()
+                    buildRoleSuggestionResponse(
+                            role,
+                            scoredRole.score(),
+                            rank,
+                            false
+                    )
             );
 
             rank++;
         }
 
+        suggestionRepository.saveAll(suggestions);
+
         return responses;
     }
 
+    /**
+     * Searches career roles using the desired role
+     * entered by the student.
+     */
     @Transactional
     public List<RoleSuggestionResponse> searchDesiredRole(
             String email,
             String desiredRole
     ) {
+        if (desiredRole == null
+                || desiredRole.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Desired role cannot be empty"
+            );
+        }
+
         User user = getUser(email);
 
         CareerProfile profile =
@@ -132,11 +173,14 @@ public class RoleService {
                                         "Set up your career profile first"
                                 ));
 
-        profile.setDesiredRole(desiredRole.trim());
+        String cleanedDesiredRole =
+                desiredRole.trim();
+
+        profile.setDesiredRole(cleanedDesiredRole);
         profileRepository.save(profile);
 
         String desiredRoleLower =
-                desiredRole.toLowerCase(Locale.ROOT);
+                cleanedDesiredRole.toLowerCase(Locale.ROOT);
 
         List<Role> roles =
                 roleRepository.findAll();
@@ -144,13 +188,14 @@ public class RoleService {
         List<ScoredRole> scoredRoles =
                 roles.stream()
                         .map(role -> {
+                            String roleTitle =
+                                    role.getTitle()
+                                            .toLowerCase(Locale.ROOT);
+
                             double score =
                                     calculateTextSimilarity(
                                             desiredRoleLower,
-                                            role.getTitle()
-                                                    .toLowerCase(
-                                                            Locale.ROOT
-                                                    )
+                                            roleTitle
                                     );
 
                             return new ScoredRole(
@@ -159,24 +204,86 @@ public class RoleService {
                             );
                         })
                         .filter(scoredRole ->
-                                scoredRole.score() > 0
+                                scoredRole.score() > 0.0
                         )
                         .sorted(
-                                Comparator.comparing(
-                                        ScoredRole::score
-                                ).reversed()
+                                Comparator
+                                        .comparing(
+                                                ScoredRole::score
+                                        )
+                                        .reversed()
+                                        .thenComparing(
+                                                scoredRole ->
+                                                        scoredRole
+                                                                .role()
+                                                                .getTitle()
+                                                                .toLowerCase(
+                                                                        Locale.ROOT
+                                                                )
+                                        )
                         )
                         .limit(5)
                         .toList();
 
-        return toResponses(scoredRoles);
+        suggestionRepository.deleteAllByProfileId(
+                profile.getId()
+        );
+
+        List<RoleSuggestion> suggestions =
+                new ArrayList<>();
+
+        List<RoleSuggestionResponse> responses =
+                new ArrayList<>();
+
+        int rank = 1;
+
+        for (ScoredRole scoredRole : scoredRoles) {
+            Role role = scoredRole.role();
+
+            RoleSuggestion suggestion =
+                    RoleSuggestion.builder()
+                            .profile(profile)
+                            .role(role)
+                            .relevanceScore(
+                                    scoredRole.score()
+                            )
+                            .rankNumber(rank)
+                            .selected(false)
+                            .build();
+
+            suggestions.add(suggestion);
+
+            responses.add(
+                    buildRoleSuggestionResponse(
+                            role,
+                            scoredRole.score(),
+                            rank,
+                            false
+                    )
+            );
+
+            rank++;
+        }
+
+        suggestionRepository.saveAll(suggestions);
+
+        return responses;
     }
 
+    /**
+     * Stores the selected role for the student's profile.
+     */
     @Transactional
     public SelectedRoleResponse selectRole(
             String email,
             Long roleId
     ) {
+        if (roleId == null) {
+            throw new IllegalArgumentException(
+                    "Role ID is required"
+            );
+        }
+
         User user = getUser(email);
 
         CareerProfile profile =
@@ -202,13 +309,16 @@ public class RoleService {
                                 profile.getId()
                         );
 
-        suggestions.forEach(suggestion ->
-                suggestion.setSelected(
-                        suggestion.getRole()
-                                .getId()
-                                .equals(roleId)
-                )
-        );
+        suggestions.forEach(suggestion -> {
+            Role suggestionRole =
+                    suggestion.getRole();
+
+            suggestion.setSelected(
+                    suggestionRole != null
+                            && suggestionRole.getId()
+                            .equals(selectedRole.getId())
+            );
+        });
 
         suggestionRepository.saveAll(suggestions);
 
@@ -222,6 +332,12 @@ public class RoleService {
                 .build();
     }
 
+    /**
+     * Calculates a simple explainable skill-based score.
+     *
+     * This is a rule-based baseline for the MVP.
+     * Later it can be replaced by embeddings or FastAPI.
+     */
     private ScoredRole scoreRole(
             Role role,
             Set<String> userSkillNames
@@ -232,14 +348,19 @@ public class RoleService {
 
         double score = 0.0;
 
+        String simplifiedTitle =
+                title
+                        .replace("developer", "")
+                        .replace("engineer", "")
+                        .trim();
+
         for (String skill : userSkillNames) {
-            if (title.contains(skill)
-                    || skill.contains(
-                    title.replace(
-                            "developer",
-                            ""
-                    ).trim()
-            )) {
+            if (title.contains(skill)) {
+                score += 0.40;
+            }
+
+            if (!simplifiedTitle.isBlank()
+                    && skill.contains(simplifiedTitle)) {
                 score += 0.40;
             }
         }
@@ -254,9 +375,19 @@ public class RoleService {
             score += 0.30;
         }
 
+        if (title.contains("backend")
+                && userSkillNames.contains("rest api")) {
+            score += 0.20;
+        }
+
         if (title.contains("full stack")
                 && userSkillNames.contains("react")) {
             score += 0.20;
+        }
+
+        if (title.contains("frontend")
+                && userSkillNames.contains("react")) {
+            score += 0.30;
         }
 
         if (title.contains("data analyst")
@@ -282,6 +413,10 @@ public class RoleService {
         );
     }
 
+    /**
+     * Calculates similarity between the student's desired
+     * role text and a stored career role title.
+     */
     private double calculateTextSimilarity(
             String input,
             String roleTitle
@@ -297,11 +432,18 @@ public class RoleService {
 
         Set<String> inputWords =
                 Arrays.stream(input.split("\\s+"))
+                        .filter(word -> !word.isBlank())
                         .collect(Collectors.toSet());
 
         Set<String> roleWords =
                 Arrays.stream(roleTitle.split("\\s+"))
+                        .filter(word -> !word.isBlank())
                         .collect(Collectors.toSet());
+
+        if (inputWords.isEmpty()
+                || roleWords.isEmpty()) {
+            return 0.0;
+        }
 
         Set<String> intersection =
                 new HashSet<>(inputWords);
@@ -321,39 +463,21 @@ public class RoleService {
                 / union.size();
     }
 
-    private List<RoleSuggestionResponse> toResponses(
-            List<ScoredRole> scoredRoles
+    private RoleSuggestionResponse
+    buildRoleSuggestionResponse(
+            Role role,
+            double score,
+            int rank,
+            boolean selected
     ) {
-        int rank = 1;
-
-        List<RoleSuggestionResponse> responses =
-                new ArrayList<>();
-
-        for (ScoredRole scoredRole : scoredRoles) {
-            responses.add(
-                    RoleSuggestionResponse.builder()
-                            .roleId(
-                                    scoredRole.role().getId()
-                            )
-                            .title(
-                                    scoredRole.role().getTitle()
-                            )
-                            .description(
-                                    scoredRole.role()
-                                            .getDescription()
-                            )
-                            .relevanceScore(
-                                    scoredRole.score()
-                            )
-                            .rankNumber(rank)
-                            .selected(false)
-                            .build()
-            );
-
-            rank++;
-        }
-
-        return responses;
+        return RoleSuggestionResponse.builder()
+                .roleId(role.getId())
+                .title(role.getTitle())
+                .description(role.getDescription())
+                .relevanceScore(score)
+                .rankNumber(rank)
+                .selected(selected)
+                .build();
     }
 
     private User getUser(String email) {

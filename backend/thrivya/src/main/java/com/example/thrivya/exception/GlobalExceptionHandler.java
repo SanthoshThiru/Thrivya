@@ -1,5 +1,6 @@
 package com.example.thrivya.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,8 +17,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>>
-    handleValidationException(
-            MethodArgumentNotValidException exception
+    handleValidation(
+            MethodArgumentNotValidException exception,
+            HttpServletRequest request
     ) {
         Map<String, String> fieldErrors =
                 new HashMap<>();
@@ -33,8 +36,17 @@ public class GlobalExceptionHandler {
         Map<String, Object> response =
                 new HashMap<>();
 
+        response.put(
+                "timestamp",
+                LocalDateTime.now()
+        );
+        response.put("status", 400);
         response.put("message", "Validation failed");
         response.put("errors", fieldErrors);
+        response.put(
+                "path",
+                request.getRequestURI()
+        );
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -42,52 +54,93 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>>
-    handleIllegalArgumentException(
-            IllegalArgumentException exception
+    public ResponseEntity<Map<String, Object>>
+    handleIllegalArgument(
+            IllegalArgumentException exception,
+            HttpServletRequest request
     ) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of(
+                        "timestamp",
+                        LocalDateTime.now(),
+                        "status",
+                        400,
                         "message",
-                        exception.getMessage()
+                        exception.getMessage() == null
+                                ? "Invalid request"
+                                : exception.getMessage(),
+                        "path",
+                        request.getRequestURI()
                 ));
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<Map<String, String>>
+    public ResponseEntity<Map<String, Object>>
     handleMaxUploadSizeExceeded(
-            MaxUploadSizeExceededException exception
+            MaxUploadSizeExceededException exception,
+            HttpServletRequest request
     ) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of(
+                        "timestamp",
+                        LocalDateTime.now(),
+                        "status",
+                        400,
                         "message",
-                        "Uploaded file is too large. Maximum size is 10 MB."
+                        "Uploaded file is too large. Maximum size is 10 MB.",
+                        "path",
+                        request.getRequestURI()
                 ));
     }
 
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<Map<String, String>>
-    handleIllegalStateException(
-            IllegalStateException exception
+    public ResponseEntity<Map<String, Object>>
+    handleIllegalState(
+            IllegalStateException exception,
+            HttpServletRequest request
     ) {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of(
+                        "timestamp",
+                        LocalDateTime.now(),
+                        "status",
+                        500,
                         "message",
-                        exception.getMessage()
+                        exception.getMessage() == null
+                                ? "Application state error"
+                                : exception.getMessage(),
+                        "path",
+                        request.getRequestURI()
                 ));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>>
-    handleGeneralException(Exception exception) {
+    public ResponseEntity<Map<String, Object>>
+    handleGeneral(
+            Exception exception,
+            HttpServletRequest request
+    ) {
+        exception.printStackTrace();
+
+        String message =
+                exception.getMessage() == null
+                        ? "Unexpected server error"
+                        : exception.getMessage();
+
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of(
+                        "timestamp",
+                        LocalDateTime.now(),
+                        "status",
+                        500,
                         "message",
-                        "An unexpected server error occurred"
+                        message,
+                        "path",
+                        request.getRequestURI()
                 ));
     }
 }

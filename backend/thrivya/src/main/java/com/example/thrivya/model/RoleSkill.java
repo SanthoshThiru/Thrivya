@@ -28,19 +28,31 @@ public class RoleSkill {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "role_id", nullable = false)
+    @JoinColumn(
+            name = "role_id",
+            nullable = false
+    )
     private Role role;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "skill_id", nullable = false)
+    @JoinColumn(
+            name = "skill_id",
+            nullable = false
+    )
     private Skill skill;
 
-    @Column(name = "priority_level", nullable = false)
+    @Column(
+            name = "priority_level",
+            nullable = false
+    )
     private Integer priorityLevel;
 
     @Column(name = "required_level")
     private String requiredLevel;
 
-    @Column(name = "relevance_weight", nullable = false)
+    @Column(
+            name = "relevance_weight",
+            nullable = false
+    )
     private Double relevanceWeight;
 }

@@ -23,11 +23,21 @@ import ManualSkills from "../pages/student/ManualSkills";
 import ResumeUpload from "../pages/student/ResumeUpload";
 import RoleSelection from "../pages/student/RoleSelection";
 import MySkills from "../pages/student/MySkills";
+import ATSReport from "../pages/student/ATSReport";
+import SkillGaps from "../pages/student/SkillGaps";
+import SkillGapHistory from "../pages/student/SkillGapHistory";
+import ResumeVersions from "../pages/student/ResumeVersions";
+import ProgressUpdate from "../pages/student/ProgressUpdate";
 
 // Other role dashboards
-import PlacementCellDashboard from "../pages/placement/PlacementCellDashboard";
-import RecruiterDashboard from "../pages/recruiter/RecruiterDashboard";
-import InterviewerDashboard from "../pages/interviewer/InterviewerDashboard";
+import PlacementCellDashboard
+  from "../pages/placement/PlacementCellDashboard";
+
+import RecruiterDashboard
+  from "../pages/recruiter/RecruiterDashboard";
+
+import InterviewerDashboard
+  from "../pages/interviewer/InterviewerDashboard";
 
 export default function AppRoutes() {
   return (
@@ -55,7 +65,9 @@ export default function AppRoutes() {
           element={<Register />}
         />
 
-        {/* Student routes */}
+        {/* =========================
+            Student routes
+        ========================== */}
 
         {/* Main student dashboard */}
         <Route
@@ -129,7 +141,7 @@ export default function AppRoutes() {
           }
         />
 
-        {/* Student's stored skills and evidence */}
+        {/* Student skills and evidence */}
         <Route
           path="/student/skills"
           element={
@@ -141,7 +153,70 @@ export default function AppRoutes() {
           }
         />
 
-        {/* Placement Cell routes */}
+        {/* Explainable ATS report */}
+        <Route
+          path="/student/ats"
+          element={
+            <ProtectedRoute
+              allowedRoles={["STUDENT"]}
+            >
+              <ATSReport />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Ordered skill-gap analysis */}
+        <Route
+          path="/student/skill-gaps"
+          element={
+            <ProtectedRoute
+              allowedRoles={["STUDENT"]}
+            >
+              <SkillGaps />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Skill-gap history */}
+        <Route
+          path="/student/skill-gap-history"
+          element={
+            <ProtectedRoute
+              allowedRoles={["STUDENT"]}
+            >
+              <SkillGapHistory />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Resume version history */}
+        <Route
+          path="/student/resume-versions"
+          element={
+            <ProtectedRoute
+              allowedRoles={["STUDENT"]}
+            >
+              <ResumeVersions />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Manual learning progress update */}
+        <Route
+          path="/student/progress"
+          element={
+            <ProtectedRoute
+              allowedRoles={["STUDENT"]}
+            >
+              <ProgressUpdate />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* =========================
+            Placement Cell routes
+        ========================== */}
+
         <Route
           path="/placement"
           element={
@@ -153,7 +228,10 @@ export default function AppRoutes() {
           }
         />
 
-        {/* Recruiter routes */}
+        {/* =========================
+            Recruiter routes
+        ========================== */}
+
         <Route
           path="/recruiter"
           element={
@@ -165,7 +243,10 @@ export default function AppRoutes() {
           }
         />
 
-        {/* Technical Interviewer routes */}
+        {/* =========================
+            Technical Interviewer routes
+        ========================== */}
+
         <Route
           path="/interviewer"
           element={

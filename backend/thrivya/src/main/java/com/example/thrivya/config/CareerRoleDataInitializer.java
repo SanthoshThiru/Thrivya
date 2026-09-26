@@ -6,10 +6,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 
 import java.util.List;
 
 @Configuration
+@Order(1)
 @RequiredArgsConstructor
 public class CareerRoleDataInitializer {
 
@@ -21,54 +23,64 @@ public class CareerRoleDataInitializer {
             List<RoleSeed> roles = List.of(
                     new RoleSeed(
                             "Java Backend Developer",
-                            "Builds backend services using Java, REST APIs, databases, and Spring Boot.",
+                            "Builds backend services using Java, databases, REST APIs, and Spring Boot.",
                             "Backend Development"
                     ),
                     new RoleSeed(
                             "Spring Boot Developer",
-                            "Develops enterprise APIs and backend applications using Spring Boot.",
+                            "Develops backend APIs and enterprise applications using Spring Boot.",
                             "Backend Development"
                     ),
                     new RoleSeed(
                             "Full Stack Developer",
-                            "Builds frontend and backend applications using web technologies.",
+                            "Builds frontend and backend applications.",
                             "Software Development"
                     ),
                     new RoleSeed(
                             "Data Analyst",
-                            "Uses SQL, spreadsheets, statistics, and visualization to analyze data.",
+                            "Analyzes data using SQL, statistics, and visualization.",
                             "Data and Analytics"
                     ),
                     new RoleSeed(
                             "Machine Learning Engineer",
-                            "Builds and deploys machine-learning systems and data pipelines.",
+                            "Builds and deploys machine-learning systems.",
                             "Artificial Intelligence"
                     ),
                     new RoleSeed(
                             "Frontend Developer",
-                            "Builds user interfaces using HTML, CSS, JavaScript, and frontend frameworks.",
+                            "Builds user interfaces using web technologies.",
                             "Frontend Development"
                     ),
                     new RoleSeed(
                             "DevOps Engineer",
-                            "Automates deployment, infrastructure, containers, and CI/CD workflows.",
+                            "Automates deployment, infrastructure, containers, and CI/CD.",
                             "Cloud and DevOps"
                     )
             );
 
             for (RoleSeed roleSeed : roles) {
-                if (roleRepository
-                        .findByTitleIgnoreCase(roleSeed.title())
-                        .isEmpty()) {
+                boolean exists =
+                        roleRepository
+                                .findByTitleIgnoreCase(
+                                        roleSeed.title()
+                                )
+                                .isPresent();
 
-                    roleRepository.save(
-                            Role.builder()
-                                    .title(roleSeed.title())
-                                    .description(roleSeed.description())
-                                    .domain(roleSeed.domain())
-                                    .build()
-                    );
+                if (exists) {
+                    continue;
                 }
+
+                roleRepository.save(
+                        Role.builder()
+                                .title(roleSeed.title())
+                                .description(
+                                        roleSeed.description()
+                                )
+                                .domain(
+                                        roleSeed.domain()
+                                )
+                                .build()
+                );
             }
         };
     }

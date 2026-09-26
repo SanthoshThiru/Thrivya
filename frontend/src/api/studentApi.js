@@ -37,6 +37,14 @@ export async function getStudentProfile() {
   return response.data;
 }
 
+export async function getResumeHistory() {
+  const response = await axiosClient.get(
+    "/student/profile/resume-history"
+  );
+
+  return response.data;
+}
+
 export async function getRoleSuggestions() {
   const response = await axiosClient.get(
     "/student/roles/suggestions"
@@ -62,6 +70,63 @@ export async function selectRole(roleId) {
     {
       roleId,
     }
+  );
+
+  return response.data;
+}
+
+export async function generateATSReport() {
+  const response = await axiosClient.post(
+    "/student/ats/generate"
+  );
+
+  return response.data;
+}
+
+export async function getLatestATSReport() {
+  const response = await axiosClient.get(
+    "/student/ats/latest"
+  );
+
+  return response.data;
+}
+
+export async function getATSHistory() {
+  const response = await axiosClient.get(
+    "/student/ats/history"
+  );
+
+  return response.data;
+}
+
+export async function calculateSkillGaps() {
+  const response = await axiosClient.post(
+    "/student/skill-gaps/calculate"
+  );
+
+  return response.data;
+}
+
+export async function getSkillGaps() {
+  const response = await axiosClient.get(
+    "/student/skill-gaps"
+  );
+
+  return response.data;
+}
+
+export async function getSkillGapHistory() {
+  const response = await axiosClient.get(
+    "/student/skill-gaps/history"
+  );
+
+  return response.data;
+}
+
+export async function updateSkillProgress(progressData) {
+  const response = await axiosClient.post(
+    "/student/progress",
+    progressData
   );
 
   return response.data;
