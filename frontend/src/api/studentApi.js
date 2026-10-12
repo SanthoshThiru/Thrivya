@@ -1,5 +1,9 @@
 import axiosClient from "./axiosClient";
 
+// ========================================
+// Career Profile: Manual Skills and Resume
+// ========================================
+
 export async function saveManualSkills(skillsText) {
   const response = await axiosClient.post(
     "/student/profile/manual-skills",
@@ -45,6 +49,10 @@ export async function getResumeHistory() {
   return response.data;
 }
 
+// ========================================
+// Career Role Selection
+// ========================================
+
 export async function getRoleSuggestions() {
   const response = await axiosClient.get(
     "/student/roles/suggestions"
@@ -75,6 +83,10 @@ export async function selectRole(roleId) {
   return response.data;
 }
 
+// ========================================
+// Explainable ATS
+// ========================================
+
 export async function generateATSReport() {
   const response = await axiosClient.post(
     "/student/ats/generate"
@@ -98,6 +110,10 @@ export async function getATSHistory() {
 
   return response.data;
 }
+
+// ========================================
+// Ordered Skill Gap Analysis
+// ========================================
 
 export async function calculateSkillGaps() {
   const response = await axiosClient.post(
@@ -123,10 +139,59 @@ export async function getSkillGapHistory() {
   return response.data;
 }
 
+// ========================================
+// Learning Progress
+// ========================================
+
 export async function updateSkillProgress(progressData) {
   const response = await axiosClient.post(
     "/student/progress",
     progressData
+  );
+
+  return response.data;
+}
+
+// ========================================
+// Learning Recommendations
+// ========================================
+
+export async function getRecommendations(
+  skillName,
+  type
+) {
+  const params = new URLSearchParams({
+    skill: skillName,
+    type,
+  });
+
+  const response = await axiosClient.get(
+    `/student/recommendations?${params.toString()}`
+  );
+
+  return response.data;
+}
+
+// ========================================
+// Project Evidence
+// ========================================
+
+export async function createProjectEvidence(projectData) {
+  const response = await axiosClient.post(
+    "/student/projects",
+    projectData
+  );
+
+  return response.data;
+}
+
+// ========================================
+// Evidence-Aware Resume Content Generation
+// ========================================
+
+export async function generateResumeContent() {
+  const response = await axiosClient.post(
+    "/student/resume-content/generate"
   );
 
   return response.data;

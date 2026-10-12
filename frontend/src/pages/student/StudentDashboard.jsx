@@ -31,8 +31,7 @@ export default function StudentDashboard() {
       setProfileLoading(true);
 
       try {
-        const dashboardData =
-          await getStudentDashboard();
+        const dashboardData = await getStudentDashboard();
 
         if (isMounted) {
           setDashboard(dashboardData);
@@ -58,8 +57,7 @@ export default function StudentDashboard() {
       }
 
       try {
-        const profileData =
-          await getStudentProfile();
+        const profileData = await getStudentProfile();
 
         if (isMounted) {
           setProfile(profileData);
@@ -99,6 +97,91 @@ export default function StudentDashboard() {
     user?.name ||
     "Student";
 
+  const hasUploadedResume =
+    Boolean(profile?.resumeId) ||
+    Boolean(profile?.fileName);
+
+  const hasSelectedRole =
+    Boolean(profile?.selectedRoleId) ||
+    Boolean(profile?.selectedRoleTitle);
+
+  const hasSkills =
+    Array.isArray(profile?.skills) &&
+    profile.skills.length > 0;
+
+  const canGenerateATS =
+    hasUploadedResume &&
+    hasSelectedRole &&
+    !profileLoading;
+
+  const canViewSkillGaps =
+    hasSelectedRole &&
+    hasSkills &&
+    !profileLoading;
+
+  const canGenerateResumeContent =
+    hasUploadedResume &&
+    hasSelectedRole &&
+    hasSkills &&
+    !profileLoading;
+
+  let atsStatusMessage =
+    "Upload a resume and select a target role to generate your ATS report.";
+
+  if (profileLoading) {
+    atsStatusMessage =
+      "Checking your resume and selected role...";
+  } else if (!hasUploadedResume && !hasSelectedRole) {
+    atsStatusMessage =
+      "Upload a resume and select a target role before generating ATS.";
+  } else if (!hasUploadedResume) {
+    atsStatusMessage =
+      "Upload a resume before generating ATS.";
+  } else if (!hasSelectedRole) {
+    atsStatusMessage =
+      "Select a target role before generating ATS.";
+  } else {
+    atsStatusMessage =
+      "Your ATS report will use your latest resume and selected role.";
+  }
+
+  let skillGapStatusMessage =
+    "Add skills and select a target role to view skill gaps.";
+
+  if (profileLoading) {
+    skillGapStatusMessage =
+      "Checking your skill profile and selected role...";
+  } else if (!hasSkills) {
+    skillGapStatusMessage =
+      "Add skills or upload a resume before viewing skill gaps.";
+  } else if (!hasSelectedRole) {
+    skillGapStatusMessage =
+      "Select a target role before viewing skill gaps.";
+  } else {
+    skillGapStatusMessage =
+      "View ordered skill gaps and recommended learning resources for your selected role.";
+  }
+
+  let resumeContentStatusMessage =
+    "Upload a resume, add skills, and select a target role before generating resume content.";
+
+  if (profileLoading) {
+    resumeContentStatusMessage =
+      "Checking your resume evidence and selected role...";
+  } else if (!hasUploadedResume) {
+    resumeContentStatusMessage =
+      "Upload a resume before generating evidence-aware resume content.";
+  } else if (!hasSkills) {
+    resumeContentStatusMessage =
+      "Add skills or upload a readable resume before generating resume content.";
+  } else if (!hasSelectedRole) {
+    resumeContentStatusMessage =
+      "Select a target role before generating resume content.";
+  } else {
+    resumeContentStatusMessage =
+      "Generate copy-ready content using your latest resume, selected role, verified skills, and learning evidence.";
+  }
+
   function handleProfileSetup() {
     navigate("/student/setup");
   }
@@ -123,16 +206,20 @@ export default function StudentDashboard() {
     navigate("/student/skill-gaps");
   }
 
-  function handleSkillGapHistory() {
-    navigate("/student/skill-gap-history");
-  }
-
   function handleResumeHistory() {
     navigate("/student/resume-versions");
   }
 
   function handleProgressUpdate() {
     navigate("/student/progress");
+  }
+
+  function handleResumeContent() {
+    if (!canGenerateResumeContent) {
+      return;
+    }
+
+    navigate("/student/resume-content");
   }
 
   function handleLogout() {
@@ -146,65 +233,6 @@ export default function StudentDashboard() {
 
   function handleTryAgain() {
     window.location.reload();
-  }
-
-  const hasUploadedResume =
-    Boolean(profile?.resumeId) ||
-    Boolean(profile?.fileName);
-
-  const hasSelectedRole =
-    Boolean(profile?.selectedRoleId) ||
-    Boolean(profile?.selectedRoleTitle);
-
-  const hasSkills =
-    Array.isArray(profile?.skills) &&
-    profile.skills.length > 0;
-
-  const canGenerateATS =
-    hasUploadedResume &&
-    hasSelectedRole &&
-    !profileLoading;
-
-  const canViewSkillGaps =
-    hasSelectedRole &&
-    hasSkills &&
-    !profileLoading;
-
-  let atsStatusMessage =
-    "Upload a resume and select a target role to generate your ATS report.";
-
-  if (profileLoading) {
-    atsStatusMessage =
-      "Checking your resume and selected role...";
-  } else if (!hasUploadedResume && !hasSelectedRole) {
-    atsStatusMessage =
-      "Upload a resume and select a target role before generating ATS.";
-  } else if (!hasUploadedResume) {
-    atsStatusMessage =
-      "Upload a resume before generating ATS.";
-  } else if (!hasSelectedRole) {
-    atsStatusMessage =
-      "Select a target role before generating ATS.";
-  } else if (canGenerateATS) {
-    atsStatusMessage =
-      "Your ATS report will use your latest resume and selected role.";
-  }
-
-  let skillGapStatusMessage =
-    "Add skills and select a target role to view skill gaps.";
-
-  if (profileLoading) {
-    skillGapStatusMessage =
-      "Checking your skill profile and selected role...";
-  } else if (!hasSkills) {
-    skillGapStatusMessage =
-      "Add skills or upload a resume before viewing skill gaps.";
-  } else if (!hasSelectedRole) {
-    skillGapStatusMessage =
-      "Select a target role before viewing skill gaps.";
-  } else if (canViewSkillGaps) {
-    skillGapStatusMessage =
-      "View the skills required for your selected role and identify missing skills.";
   }
 
   if (error) {
@@ -246,7 +274,7 @@ export default function StudentDashboard() {
         <section style={styles.loadingCard}>
           <p style={styles.brand}>Thrivya</p>
           <h1>Student Dashboard</h1>
-          <p>Loading student dashboard...</p>
+          <p>Loading your career dashboard...</p>
         </section>
       </main>
     );
@@ -263,16 +291,16 @@ export default function StudentDashboard() {
       }
     >
       <p style={styles.welcomeText}>
-        Welcome <strong>{studentName}</strong>
+        Welcome, <strong>{studentName}</strong>
       </p>
 
-      <div style={styles.infoBox}>
+      <section style={styles.infoBox}>
         <h2>Build your career profile</h2>
 
         <p>
           Upload or update your resume, enter skills manually,
           choose a desired role, or receive relevant role
-          suggestions.
+          suggestions from Thrivya.
         </p>
 
         <div style={styles.buttonGroup}>
@@ -292,17 +320,17 @@ export default function StudentDashboard() {
             Show my skills
           </button>
         </div>
-      </div>
+      </section>
 
-      <div style={styles.atsBox}>
+      <section style={styles.atsBox}>
         <div>
           <h2 style={styles.atsTitle}>
             Explainable ATS analysis
           </h2>
 
           <p style={styles.atsDescription}>
-            Analyze your uploaded resume against your selected
-            career role.
+            Analyze your latest uploaded resume against your
+            selected career role with factor-wise explanations.
           </p>
 
           <p
@@ -333,19 +361,19 @@ export default function StudentDashboard() {
         >
           {profileLoading
             ? "Checking profile..."
-            : "View explainable ATS report"}
+            : "View ATS report"}
         </button>
-      </div>
+      </section>
 
-      <div style={styles.skillGapBox}>
+      <section style={styles.skillGapBox}>
         <div>
           <h2 style={styles.skillGapTitle}>
-            Skill-gap analysis
+            Ordered skill-gap analysis
           </h2>
 
           <p style={styles.skillGapDescription}>
-            Compare your current skills with the requirements
-            of your selected role.
+            Compare your current skills with your selected role
+            and identify the most important gaps first.
           </p>
 
           <p
@@ -370,44 +398,24 @@ export default function StudentDashboard() {
           }
           title={
             canViewSkillGaps
-              ? "Open skill-gap analysis"
+              ? "Open ordered skill-gap analysis"
               : skillGapStatusMessage
           }
         >
-          View skill-gap analysis
+          View skill gaps
         </button>
-      </div>
+      </section>
 
-      <div style={styles.historyBox}>
-        <div>
-          <h2 style={styles.historyTitle}>
-            Skill-gap history
-          </h2>
-
-          <p style={styles.historyDescription}>
-            Track how your skill gaps change after resume
-            updates and learning progress.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleSkillGapHistory}
-          style={styles.historyButton}
-        >
-          View skill-gap history
-        </button>
-      </div>
-
-      <div style={styles.progressBox}>
+      <section style={styles.progressBox}>
         <div>
           <h2 style={styles.progressTitle}>
             Learning progress
           </h2>
 
           <p style={styles.progressDescription}>
-            Record newly learned skills and update your
-            evidence-based profile.
+            Record new learning progress and evidence. Your
+            skill profile and future gap analysis can then
+            reflect the update.
           </p>
         </div>
 
@@ -418,17 +426,61 @@ export default function StudentDashboard() {
         >
           Update learning progress
         </button>
-      </div>
+      </section>
 
-      <div style={styles.resumeHistoryBox}>
+      <section style={styles.resumeContentBox}>
+        <div>
+          <h2 style={styles.resumeContentTitle}>
+            Evidence-aware resume content
+          </h2>
+
+          <p style={styles.resumeContentDescription}>
+            Generate safe, copy-ready resume content using your
+            latest resume, selected role, verified skills, and
+            learning-progress evidence.
+          </p>
+
+          <p
+            style={
+              canGenerateResumeContent
+                ? styles.readyMessage
+                : styles.warningMessage
+            }
+          >
+            {resumeContentStatusMessage}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleResumeContent}
+          disabled={!canGenerateResumeContent}
+          style={
+            canGenerateResumeContent
+              ? styles.resumeContentButton
+              : styles.disabledResumeContentButton
+          }
+          title={
+            canGenerateResumeContent
+              ? "Open resume content generation"
+              : resumeContentStatusMessage
+          }
+        >
+          {profileLoading
+            ? "Checking profile..."
+            : "Generate resume content"}
+        </button>
+      </section>
+
+      <section style={styles.resumeHistoryBox}>
         <div>
           <h2 style={styles.resumeHistoryTitle}>
-            Resume versions
+            Resume version history
           </h2>
 
           <p style={styles.resumeHistoryDescription}>
-            View your active resume and previous uploaded
-            versions.
+            View your active resume, previous versions, and
+            track improvement over time.
           </p>
         </div>
 
@@ -439,9 +491,9 @@ export default function StudentDashboard() {
         >
           View resume history
         </button>
-      </div>
+      </section>
 
-      <div style={styles.statusBox}>
+      <section style={styles.statusBox}>
         <h2>Profile status</h2>
 
         <div style={styles.statusRow}>
@@ -470,7 +522,9 @@ export default function StudentDashboard() {
                 : styles.pendingStatus
             }
           >
-            {hasSkills ? "Completed" : "Pending"}
+            {hasSkills
+              ? "Completed"
+              : "Pending"}
           </span>
         </div>
 
@@ -498,7 +552,7 @@ export default function StudentDashboard() {
             </strong>
           </div>
         )}
-      </div>
+      </section>
     </DashboardCard>
   );
 }
@@ -709,41 +763,6 @@ const styles = {
     cursor: "not-allowed",
   },
 
-  historyBox: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "24px",
-    marginTop: "24px",
-    padding: "24px",
-    border: "1px solid #fed7aa",
-    borderRadius: "14px",
-    background: "#fff7ed",
-  },
-
-  historyTitle: {
-    marginTop: 0,
-    marginBottom: "8px",
-    color: "#c2410c",
-  },
-
-  historyDescription: {
-    marginTop: 0,
-    color: "#9a3412",
-  },
-
-  historyButton: {
-    flexShrink: 0,
-    padding: "12px 18px",
-    border: "none",
-    borderRadius: "9px",
-    background: "#ea580c",
-    color: "#ffffff",
-    fontSize: "15px",
-    fontWeight: 600,
-    cursor: "pointer",
-  },
-
   progressBox: {
     display: "flex",
     alignItems: "center",
@@ -777,6 +796,53 @@ const styles = {
     fontSize: "15px",
     fontWeight: 600,
     cursor: "pointer",
+  },
+
+  resumeContentBox: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "24px",
+    marginTop: "24px",
+    padding: "24px",
+    border: "1px solid #fde68a",
+    borderRadius: "14px",
+    background: "#fffbeb",
+  },
+
+  resumeContentTitle: {
+    marginTop: 0,
+    marginBottom: "8px",
+    color: "#a16207",
+  },
+
+  resumeContentDescription: {
+    marginTop: 0,
+    color: "#854d0e",
+  },
+
+  resumeContentButton: {
+    flexShrink: 0,
+    padding: "12px 18px",
+    border: "none",
+    borderRadius: "9px",
+    background: "#ca8a04",
+    color: "#ffffff",
+    fontSize: "15px",
+    fontWeight: 600,
+    cursor: "pointer",
+  },
+
+  disabledResumeContentButton: {
+    flexShrink: 0,
+    padding: "12px 18px",
+    border: "none",
+    borderRadius: "9px",
+    background: "#fcd34d",
+    color: "#ffffff",
+    fontSize: "15px",
+    fontWeight: 600,
+    cursor: "not-allowed",
   },
 
   resumeHistoryBox: {

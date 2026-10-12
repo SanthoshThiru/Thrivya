@@ -16,12 +16,16 @@ import {
   getSkillGaps,
 } from "../../api/studentApi";
 
+import RecommendationPanel from "../../components/RecommendationPanel";
+
 export default function SkillGaps() {
   const navigate = useNavigate();
 
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [expandedSkillId, setExpandedSkillId] =
+    useState(null);
 
   async function loadExistingGaps() {
     try {
@@ -311,12 +315,16 @@ export default function SkillGaps() {
                   gap.gapPercentage || 0
                 );
 
+                const skillKey =
+                  gap.skillGapId ||
+                  `${gap.skillName}-${index}`;
+
+                const isExpanded =
+                  expandedSkillId === skillKey;
+
                 return (
                   <article
-                    key={
-                      gap.skillGapId ||
-                      `${gap.skillName}-${index}`
-                    }
+                    key={skillKey}
                     style={styles.gapRow}
                   >
                     <div style={styles.rank}>
@@ -401,6 +409,27 @@ export default function SkillGaps() {
                           <strong>Evidence:</strong>{" "}
                           {gap.evidenceText}
                         </p>
+                      )}
+
+                      <button
+                        onClick={() =>
+                          setExpandedSkillId(
+                            isExpanded
+                              ? null
+                              : skillKey
+                          )
+                        }
+                        style={styles.recommendButton}
+                      >
+                        {isExpanded
+                          ? "Hide learning options"
+                          : "View learning options"}
+                      </button>
+
+                      {isExpanded && (
+                        <RecommendationPanel
+                          skillName={gap.skillName}
+                        />
                       )}
                     </div>
                   </article>
@@ -524,6 +553,16 @@ const styles = {
     color: "white",
     cursor: "pointer",
     fontWeight: 600,
+  },
+
+  recommendButton: {
+    marginTop: "12px",
+    padding: "9px 14px",
+    border: "none",
+    borderRadius: "8px",
+    background: "#0f766e",
+    color: "white",
+    cursor: "pointer",
   },
 
   summaryGrid: {
